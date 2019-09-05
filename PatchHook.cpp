@@ -39,10 +39,10 @@ bool PatchHook::ApplyHook()
 	{
 		if (this->m_GenerateBackup)
 		{
-			this->m_FunctionBackup = VirtualAlloc(NULL, 0x500, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+			DWORD allocationSize = 0x500;
+			this->m_FunctionBackup = VirtualAlloc(NULL, allocationSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 			if (this->m_FunctionBackup)
 			{
-				DWORD allocationSize = 0x500;
 				PPEB pEnvironmentBlock = { 0 };
 
 				#if defined(_WIN64)
@@ -140,3 +140,4 @@ PatchHook::~PatchHook()
 	if (this->m_GenerateBackup)
 		VirtualFree(this->m_FunctionBackup, NULL, MEM_RELEASE);
 }
+
