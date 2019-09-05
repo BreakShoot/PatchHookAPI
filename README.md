@@ -8,7 +8,7 @@ A short class to implement some basic patching, restoration, and function copyin
 - Function copying for backup
 
 ## Example Usage
-```
+```cpp
 #include "PatchHook.hpp"
 
 typedef int(WINAPI* tMessageBoxA)(HWND, LPCSTR, LPCSTR, UINT);
