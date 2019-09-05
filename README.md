@@ -38,8 +38,12 @@ int main()
 		MessageBoxABackup = reinterpret_cast<tMessageBoxA>(MessageBoxHook->GetBackupFunction());
 	}
 
-	MessageBoxA(0, "This is Text", "Creative Caption", MB_OK);
-	MessageBoxHook->RemoveHook();
-	MessageBoxA(0, "This is Text", "Creative Caption", MB_OK);
+	MessageBoxA(NULL, "This is Text", "Creative Caption", MB_OK);
+
+	if (MessageBoxHook->Hooked())
+		if (MessageBoxHook->RemoveHook())
+			MessageBoxA(NULL, "This is Text", "Creative Caption", MB_OK);
+
+	delete MessageBoxHook;
 }
 ```
