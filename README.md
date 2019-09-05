@@ -39,5 +39,7 @@ int main()
 	}
 
 	MessageBoxA(0, "This is Text", "Creative Caption", MB_OK);
+	MessageBoxHook->RemoveHook();
+	MessageBoxA(0, "This is Text", "Creative Caption", MB_OK);
 }
 ```
