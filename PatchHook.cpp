@@ -116,14 +116,15 @@ bool PatchHook::RemoveHook() const
 bool PatchHook::Hooked() const
 {
 	DWORD oldProtection = 0;
-	bool IsHooked = false;
+	bool isHooked = false;
 
 	VirtualProtect(reinterpret_cast<void*>(this->m_Address), 1, PAGE_EXECUTE_READWRITE, &oldProtection);
-	IsHooked = memcmp(reinterpret_cast<void*>(this->m_Address), "\xE9", 1) == 0;
+	isHooked = *reinterpret_cast<BYTE*>(this->m_Address) == 0xE9 && *reinterpret_cast<DWORD*>(this->m_Address + 1) == this->m_FunctionHookAddress - this->m_Address - 5;
 	VirtualProtect(reinterpret_cast<void*>(this->m_Address), 1, oldProtection, &oldProtection);
 
-	return IsHooked;
+	return isHooked;
 }
+
 
 void* PatchHook::GetBackupFunction() const
 {
