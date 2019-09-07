@@ -44,18 +44,14 @@ bool PatchHook::ApplyHook()
 			if (this->m_FunctionBackup)
 			{
 				PPEB pEnvironmentBlock = { 0 };
-
-				#if defined(_WIN64)
-					pEnvironmentBlock = (PPEB)__readgsqword(0x60);
-				#else
-					__asm
-					{
-						push eax
-						mov eax, fs: [30h]
-						mov pEnvironmentBlock, eax
-						pop eax
-					}
-				#endif
+				
+				__asm
+				{
+					push eax
+					mov eax, fs: [30h]
+					mov pEnvironmentBlock, eax
+					pop eax
+				}
 
 				if (pEnvironmentBlock)
 				{
