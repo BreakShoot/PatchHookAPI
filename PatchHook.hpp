@@ -1,7 +1,4 @@
 #include <winternl.h>
-#if defined(_WIN64)
-	#include <intrin.h>
-#endif
 
 class PatchHook
 {
