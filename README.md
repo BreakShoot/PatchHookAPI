@@ -2,7 +2,7 @@
 A short class to implement some basic patching, restoration, and function copying for backup.
 
 ## Supports
-- x64 and x86 Hooks.
+- x86 only
 - Hook patching
 - Hook unpatching (byte restoration)
 - Function copying for backup
