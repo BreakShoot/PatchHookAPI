@@ -1,10 +1,13 @@
 #include "PatchHook.hpp"
 #include <windows.h> //replace with pch.h if possible
 
+//you only need to do this when the rel32 offsets to calls get completely beaned by a relocation as call offsets are relative to their caller,
+//so if you relocate, then the caller address is obviously changed so the call offsets of every address in the caller stub needs to be fixed.
 void PatchHook::FixRelatives(DWORD Address, DWORD Size) const
 {
 	for (DWORD offset = 0; offset < Size; ++offset)
 	{
+		//so some WINAPI functions use 0x0F for a type of direct call to the internal WINAPI functions they call.
 		if (*reinterpret_cast<BYTE*>(Address + offset) == 0x0F)
 		{
 			const DWORD CorrectCalledFunctionAddress = (this->m_Address + offset) + *reinterpret_cast<DWORD*>(this->m_Address + offset + 2) + 6;
@@ -12,6 +15,8 @@ void PatchHook::FixRelatives(DWORD Address, DWORD Size) const
 			*reinterpret_cast<DWORD*>(Address + offset + 2) = FixedCalledOffset;
 		}
 
+		//Our average rel32 calls -> pretty simple math here.
+		//the offset of our call = the called function address - address of caller - 5;
 		if (*reinterpret_cast<BYTE*>(Address + offset) == 0xE8 || *reinterpret_cast<BYTE*>(Address + offset) == 0xE9)
 		{
 			const DWORD CorrectCalledFunctionAddress = (this->m_Address + offset) + *reinterpret_cast<DWORD*>(this->m_Address + offset + 1) + 5;
@@ -39,11 +44,11 @@ bool PatchHook::ApplyHook()
 	{
 		if (this->m_GenerateBackup)
 		{
-			DWORD allocationSize = 0x500;
+			DWORD allocationSize = 0x500; //max allocation size, can be modified to any number, but 500 is pretty big.
 			this->m_FunctionBackup = VirtualAlloc(NULL, allocationSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 			if (this->m_FunctionBackup)
 			{
-				PPEB pEnvironmentBlock = { 0 };
+				PPEB pEnvironmentBlock = { 0 }; //get process PEB https://en.wikipedia.org/wiki/Process_Environment_Block
 				
 				__asm
 				{
@@ -52,7 +57,9 @@ bool PatchHook::ApplyHook()
 					mov pEnvironmentBlock, eax
 					pop eax
 				}
-
+				
+				//this entire bottom portion is essentially a paranoia check with memory allocation size. It is
+				//not really needed so you can actually ignore what it is doing.
 				if (pEnvironmentBlock)
 				{
 					PLIST_ENTRY currentEntry = pEnvironmentBlock->Ldr->InMemoryOrderModuleList.Flink;
@@ -76,16 +83,21 @@ bool PatchHook::ApplyHook()
 					}
 				}
 
+				//write in function backup
 				memcpy(this->m_FunctionBackup, reinterpret_cast<void* const>(this->m_Address), allocationSize);
+				
+				//fix the rel32 address to the calls.
 				this->FixRelatives(reinterpret_cast<DWORD>(this->m_FunctionBackup), allocationSize);
 			}
 				
 		}
 
+		//write in hook to our hooked function
 		memcpy(this->m_OriginalBytes, reinterpret_cast<void* const>(this->m_Address), this->m_Size);
 		*reinterpret_cast<BYTE*>(this->m_Address) = 0xE9;
 		*reinterpret_cast<DWORD*>(this->m_Address + 1) = this->m_FunctionHookAddress - this->m_Address - 5;
 
+		//NOP the rest afterwards (not rly necessary)
 		for (DWORD offset = 5; offset < this->m_Size; ++offset)
 			*reinterpret_cast<BYTE*>(this->m_Address + offset) = 0x90;
 
